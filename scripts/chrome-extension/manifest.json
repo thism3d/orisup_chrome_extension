@@ -1,0 +1,66 @@
+{
+  "manifest_version": 3,
+  "name": "Orisup AliExpress Scraper",
+  "version": "1.0.0",
+  "description": "Scrape AliExpress products and upload directly to your Orisup store",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "sidePanel",
+    "contextMenus",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://*.aliexpress.com/*",
+    "https://*.alisports.com/*",
+    "https://*.alicdn.com/*",
+    "http://localhost:*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.aliexpress.com/*",
+        "https://*.alisports.com/*"
+      ],
+      "js": [
+        "lib/scraper-core.js",
+        "content-scripts/aliexpress-scraper.js"
+      ],
+      "css": [
+        "content-scripts/scraper-panel.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "side_panel": {
+    "default_path": "side-panel/panel.html"
+  },
+  "action": {
+    "default_title": "Orisup AliExpress Scraper",
+    "default_popup": "popup/popup.html"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "side-panel/*",
+        "lib/*",
+        "icons/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}

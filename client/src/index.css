@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ob-brand: #d4e800;
+  --ob-brand-soft: rgba(212, 232, 0, 0.14);
+  --ob-secondary: #0b0b0b;
+  --ob-ink: #0b0b0b;
+  --ob-paper: #ffffff;
+  --ob-surface: #ffffff;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--ob-brand-soft);
+  color: var(--ob-ink);
+}
+
+/* Subtle shimmer for custom loading states (optional class) */
+@keyframes ob-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.ob-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: ob-shimmer 1.2s ease-in-out infinite;
+}

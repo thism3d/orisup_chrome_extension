@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- maximum-scale removed for a11y: users with low vision must be able to pinch-zoom. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="__THEME_COLOR__" />
+    <link rel="icon" href="__FAVICON_URL__" type="__FAVICON_MIME__" />
+    <link rel="shortcut icon" href="__FAVICON_URL__" type="__FAVICON_MIME__" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" title="Sitemap" />
+
+    <!-- LCP image preload (server-injected based on first hero banner). Empty when no hero is set. -->
+    __LCP_HERO_PRELOAD__
+
+    <!-- Fonts referenced in MUI themes (Inter + DM Sans + Montserrat for Norex TECH STORE / theme2).
+         Loaded non-blocking via media=print + onload swap so they don't block FCP/LCP.
+         Original 5-family load was costing ~810ms of blocking time + ~100KB. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap"
+      />
+    </noscript>
+
+    <title>__SITE_TITLE__</title>
+    <meta
+      name="description"
+      content="__SITE_DESCRIPTION__"
+    />
+    <meta name="keywords" content="__SITE_KEYWORDS__" />
+    <link rel="canonical" href="__SEO_CANONICAL_URL__" />
+    <meta name="robots" content="__SEO_ROBOTS__" />
+    __SEO_JSONLD__
+    <meta property="og:site_name" content="__SITE_NAME__" />
+    <meta property="og:type" content="__OG_TYPE__" />
+    <meta property="og:url" content="__SEO_OG_URL__" />
+    <meta property="og:locale" content="en_BD" />
+    <meta property="og:title" content="__OG_TITLE__" />
+    <meta
+      property="og:description"
+      content="__OG_DESCRIPTION__"
+    />
+    <meta property="og:image" content="__OG_IMAGE__" />
+    <meta property="og:image:alt" content="__OG_IMAGE_ALT__" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="__SEO_OG_URL__" />
+    <meta name="twitter:title" content="__TWITTER_TITLE__" />
+    <meta name="twitter:description" content="__TWITTER_DESCRIPTION__" />
+    <meta name="twitter:image" content="__OG_IMAGE__" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      window.__ORLENBD_INITIAL_SITE_META__ = __PUBLIC_SITE_META_JSON__;
+      window.__ORLENBD_INITIAL_HOME__ = __PUBLIC_HOME_BOOTSTRAP_JSON__;
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

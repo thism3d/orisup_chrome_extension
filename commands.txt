@@ -1,0 +1,45 @@
+# UttoraSteel first-time bootstrap:
+# 1) Create PostgreSQL DB/user (uttorasteel, uttora).
+# 2) sudo mkdir -p /var/www/uttorasteel && sudo chown -R admin93:admin93 /var/www/uttorasteel
+# 3) git clone git@gitlab.com:programmerhimel/orlenbd.git /var/www/uttorasteel
+# 4) cp /var/www/uttorasteel/deploy/vps-uttorasteel.env /var/www/uttorasteel/.env (then edit secrets)
+# 5) cd /var/www/uttorasteel && ./deploy.sh
+# 6) Cloudflare tunnel routes (add to /etc/cloudflared/config.yml before http_status:404):
+#    - hostname: uttorasteel.com
+#      service: http://localhost:5029
+#    - hostname: www.uttorasteel.com
+#      service: http://localhost:5029
+#    then: sudo systemctl restart cloudflared
+
+sudo chown -R admin93:admin93 /var/www/orlenbd /var/www/norexbd /var/www/orynbd /var/www/masumtraders /var/www/uttorasteel /var/www/adorashop
+sudo chown -R admin93:admin93 /var/www/orlenbd/uploads /var/www/norexbd/uploads /var/www/orynbd/uploads /var/www/masumtraders/uploads /var/www/uttorasteel/uploads /var/www/adorashop/uploads
+sudo chown -R admin93:admin93 /var/www/orlenbd/.git /var/www/norexbd/.git /var/www/orynbd/.git /var/www/masumtraders/.git /var/www/uttorasteel/.git /var/www/adorashop/.git
+
+# Each app .env: PUBLIC_SITE_URL and VITE_PUBLIC_SITE_URL = primary origin (apex or www). Prefer ENFORCE_CANONICAL_ORIGIN=true so only one hostname is live; submit that host’s sitemap in Google Search Console.
+# Dual hostname (CDN serves both apex + www): set PUBLIC_ORIGIN_MIRROR_REQUEST_HOST=true and VITE_PUBLIC_ORIGIN_MIRROR_REQUEST_HOST=true — sitemap.xml <loc>, robots.txt Sitemap: line, and SSR canonical/robots/meta follow the inbound Host (whitelist: PUBLIC_SITE_URL host + its www/apex pair). Omit both mirror flags otherwise.
+# GSC note: “Discovered – currently not indexed” with Last crawled N/A is often crawl scheduling; aligning host (above) avoids www property showing sitemap discovered 0 while apex shows URLs. Removing duplicate Domain properties fixes split reporting.
+# DEFAULT_STOREFRONT_UI_TEMPLATE=orlenbd|norexbd|orynbd|masumtraders|uttorasteel|adorashop, DEFAULT_STOREFRONT_THEME=theme1|theme2|theme3|theme4|theme5|theme6, etc.
+
+# Adora Shop — adora.orlenbd.com (fashion storefront template `adorashop`, theme6; install dir adorashop)
+# 1) PostgreSQL: create role adorashop_user + database adorashop_db (same pattern as orlenbd_user/orlenbd_db).
+# If a failed /var/www/adorashop exists (no .git): sudo rm -rf /var/www/adorashop
+# 2) sudo mkdir -p /var/www/adorashop/uploads && sudo chown -R admin93:admin93 /var/www/adorashop
+# 3) git clone git@gitlab.com:programmerhimel/orlenbd.git /var/www/adorashop
+# 4) cp /var/www/adorashop/deploy/vps-adorashop.env /var/www/adorashop/.env  (edit DATABASE_URL, SESSION_SECRET, PLATFORM_ADMIN_*)
+# 5) cd /var/www/adorashop && ./deploy.sh   (PM2 app name = folder basename: adorashop; PORT=5030)
+# 6) Cloudflare DNS: add CNAME adora → tunnel (same tunnel as main Orlenbd) or proxied hostname your CF setup uses.
+# 7) /etc/cloudflared/config.yml — before catch-all http_status:404):
+#    - hostname: adora.orlenbd.com
+#      service: http://localhost:5030
+#    then: sudo systemctl restart cloudflared
+
+# Full chain: omit the adorashop line until the Adora bootstrap (above) exists on the VPS.
+cd /var/www/orlenbd && rm -rf dist && git pull && ./deploy.sh && \
+cd /var/www/norexbd && rm -rf dist && git pull && ./deploy.sh && \
+cd /var/www/orynbd && rm -rf dist && git pull && ./deploy.sh && \
+cd /var/www/masumtraders && rm -rf dist && git pull && ./deploy.sh && \
+cd /var/www/uttorasteel && rm -rf dist && git pull && ./deploy.sh && \
+cd /var/www/adorashop && rm -rf dist && git pull && ./deploy.sh
+
+# DB schema sync (omit trailing adorashop segment until clone exists).
+cd /var/www/orlenbd/ && git pull && npm install && npm run db:push && cd /var/www/norexbd/ && git pull && npm install && npm run db:push && cd /var/www/orynbd/ && git pull && npm install && npm run db:push && cd /var/www/masumtraders/ && git pull && npm install && npm run db:push && cd /var/www/uttorasteel/ && git pull && npm install && npm run db:push && cd /var/www/adorashop/ && git pull && npm install && npm run db:push

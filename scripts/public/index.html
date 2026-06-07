@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AliExpress Scraper Dashboard</title>
+  <style>
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #09101a; color: #e8edf4; }
+    * { box-sizing: border-box; }
+    .page { max-width: 1320px; margin: 0 auto; padding: 24px; }
+    header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+    header h1 { font-size: clamp(2rem, 3vw, 2.75rem); margin: 0; letter-spacing: -0.03em; }
+    header p { margin: 0; color: #b8c2d4; }
+    .controls { display: grid; gap: 16px; grid-template-columns: 1fr auto; align-items: center; }
+    .search-box { display: flex; gap: 8px; align-items: center; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px 16px; }
+    .search-box input { flex: 1; border: none; outline: none; background: transparent; color: #fff; font-size: 1rem; }
+    .search-box button { border: none; background: #1f6feb; color: #fff; border-radius: 10px; padding: 10px 16px; cursor: pointer; font-weight: 700; }
+    .status-tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+    .tab { padding: 10px 18px; border-radius: 999px; cursor: pointer; border: 1px solid rgba(255,255,255,0.12); transition: 0.2s; background: rgba(255,255,255,0.04); color: #d8e4ff; }
+    .tab.active { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+    .stats { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px; }
+    .metric-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between; }
+    .metric-card h2 { margin: 0 0 8px; font-size: 1.5rem; }
+    .metric-card span { color: #9aacce; }
+    .grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+    .card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; min-height: 460px; }
+    .card__image { position: relative; min-height: 200px; background: #121b2c; display: flex; align-items: center; justify-content: center; }
+    .card__image img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+    .card__thumbs { display: flex; gap: 8px; padding: 12px 18px 0; overflow-x: auto; }
+    .mini-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 2px solid transparent; transition: 0.2s; background: #121b2c; flex-shrink: 0; }
+    .mini-thumb:hover { border-color: #1f6feb; transform: scale(1.05); }
+    .card__body { padding: 18px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+    .card__label { display: inline-flex; gap: 8px; align-items: center; color: #a4b8db; font-size: 0.93rem; }
+    .card__title { font-size: 1.1rem; margin: 0; line-height: 1.35; }
+    .card__description { color: #b8c2d4; font-size: 0.95rem; line-height: 1.5; max-height: 4.5rem; overflow: hidden; }
+    .card__meta { display: grid; gap: 8px; grid-template-columns: 1fr; }
+    .chip { padding: 8px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem; background: rgba(255,255,255,0.06); }
+    .chip.status-pending { color: #f5d16f; background: rgba(245,209,111,0.12); }
+    .chip.status-approved { color: #7cd174; background: rgba(124,209,116,0.14); }
+    .chip.status-rejected { color: #fa7e89; background: rgba(250,126,137,0.14); }
+    .chip.status-uploaded { color: #66d0ff; background: rgba(102,208,255,0.12); }
+    .price { font-size: 1.35rem; font-weight: 700; color: #ffe28a; }
+    .card-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .card-actions button { border: none; border-radius: 14px; padding: 12px 10px; font-weight: 700; cursor: pointer; transition: transform 0.15s ease; }
+    .card-actions button:hover { transform: translateY(-1px); }
+    .button-approve { background: #1d8f59; color: #fff; }
+    .button-reject { background: #d6455d; color: #fff; }
+    .button-upload { background: #2563eb; color: #fff; }
+    .button-view { background: #4f46e5; color: #fff; }
+    .empty-state { text-align: center; color: #98a8c7; padding: 48px 0; display: none; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(8, 13, 28, 0.85); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 20; }
+    .modal-backdrop.open { display: flex; }
+    .modal-card { width: min(100%, 1040px); max-height: 90vh; overflow: auto; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 26px; padding: 24px; position: relative; }
+    .modal-close { position: absolute; top: 18px; right: 18px; background: rgba(255,255,255,0.08); border: none; color: #f8fbff; width: 38px; height: 38px; border-radius: 12px; cursor: pointer; }
+    .modal-grid { display: grid; gap: 20px; grid-template-columns: 1fr 1fr; }
+    .modal-grid .sidebar { display: grid; gap: 16px; }
+    .modal-section { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 18px; }
+    .modal-section h3 { margin-top: 0; font-size: 1.05rem; }
+    .modal-section p { margin: 0; color: #c2cee8; line-height: 1.6; }
+    .modal-gallery { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+    .modal-gallery img { width: 100%; border-radius: 16px; height: 100px; object-fit: cover; }
+    .detail-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .detail-table th, .detail-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .detail-table th { color: #adb9d9; font-weight: 600; width: 160px; }
+    .raw-json { white-space: pre-wrap; font-family: Menlo, Consolas, monospace; color: #d7e2f3; font-size: 0.88rem; margin-top: 10px; }
+    .tooltip { color: #8da1c5; }
+    @media (max-width: 860px) { .modal-grid { grid-template-columns: 1fr; } .card-actions { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <h1>AliExpress Scraper Dashboard</h1>
+        <p>Review, approve, reject, and upload scraped products with fast filtering, statistics, and detail preview.</p>
+      </div>
+      <button id="refreshButton" class="tab" style="min-width: 130px;">Refresh data</button>
+    </header>
+
+    <div class="controls">
+      <div class="search-box">
+        <input id="searchInput" type="search" placeholder="Search by title or source URL…" />
+        <button id="searchButton">Search</button>
+      </div>
+      <div class="status-tabs" id="statusTabs"></div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+    <div class="grid" id="productGrid"></div>
+    <div id="emptyState" class="empty-state">No scraped products found for these filters. Try another status or search term.</div>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal-card">
+      <button class="modal-close" id="modalClose">✕</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    const statusOptions = [
+      { key: 'pending', label: 'Pending' },
+      { key: 'approved', label: 'Accepted' },
+      { key: 'rejected', label: 'Rejected' },
+      { key: 'uploaded', label: 'Uploaded' },
+      { key: 'all', label: 'All' },
+    ];
+
+    let currentStatus = 'pending';
+    let currentSearch = '';
+    let latestProducts = [];
+
+    const statusTabs = document.getElementById('statusTabs');
+    const productGrid = document.getElementById('productGrid');
+    const statsEl = document.getElementById('stats');
+    const emptyState = document.getElementById('emptyState');
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    const refreshButton = document.getElementById('refreshButton');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalContent = document.getElementById('modalContent');
+    const modalClose = document.getElementById('modalClose');
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'BDT', maximumFractionDigits: 0 }).format(value);
+    }
+
+    function renderStatusTabs() {
+      statusTabs.innerHTML = '';
+      statusOptions.forEach((option) => {
+        const button = document.createElement('button');
+        button.className = 'tab ' + (currentStatus === option.key ? 'active' : '');
+        button.textContent = option.label;
+        button.addEventListener('click', () => {
+          currentStatus = option.key;
+          loadProducts();
+        });
+        statusTabs.appendChild(button);
+      });
+    }
+
+    function renderStats(stats) {
+      statsEl.innerHTML = '';
+      const cards = [
+        { label: 'Pending', value: stats.pending || 0 },
+        { label: 'Accepted', value: stats.approved || 0 },
+        { label: 'Rejected', value: stats.rejected || 0 },
+        { label: 'Uploaded', value: stats.uploaded || 0 },
+        { label: 'Total scraped', value: stats.total || 0 },
+      ];
+      cards.forEach((card) => {
+        const box = document.createElement('div');
+        box.className = 'metric-card';
+        box.innerHTML = '<div><h2>' + card.value + '</h2><span>' + card.label + '</span></div>';
+        statsEl.appendChild(box);
+      });
+    }
+
+    function renderProductCard(product) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const allImages = Array.isArray(product.downloaded_images) && product.downloaded_images.length ? product.downloaded_images : Array.isArray(product.images) ? product.images : [];
+      const imageUrl = allImages[0] || '';
+      const statusClass = 'status-' + String(product.review_status || 'pending').toLowerCase();
+      const statusLabel = String(product.review_status || 'pending').toLowerCase() === 'approved' ? 'Accepted' : String(product.review_status || 'pending').replace(/\b\w/g, (c) => c.toUpperCase());
+      const description = String(product.description || '').slice(0, 120).trim();
+      const comparePrice = product.compare_at_price_bdt ? '<div class="chip">Was ' + formatCurrency(product.compare_at_price_bdt) + '</div>' : '';
+      const thumbsHtml = allImages.slice(0, 6).map((imgSrc) => '<img src="' + imgSrc + '" class="mini-thumb" onclick="document.getElementById(\'main-img-' + product.id + '\').src=\'' + imgSrc + '\'" onerror="this.style.display=\'none\'" title="Click to preview" />').join('');
+      const thumbBar = allImages.length > 1 ? '<div class="card__thumbs">' + thumbsHtml + '</div>' : '';
+
+      card.innerHTML = '\n        <div class="card__image">\n          <img id="main-img-' + product.id + '" src="' + imageUrl + '" alt="' + product.title.replace(/"/g, '&quot;') + '" onerror="this.src=\'https://via.placeholder.com/400x250/0d172d/5f7fbc?text=No+Image\'" />\n        </div>\n        ' + thumbBar + '\n        <div class="card__body">\n          <div class="card__label"><span class="chip ' + statusClass + '">' + statusLabel + '</span> <span>' + (product.source_host || 'AliExpress') + ' (' + allImages.length + ' images)</span></div>\n          <h2 class="card__title">' + product.title + '</h2>\n          <p class="card__description">' + (description || 'No description available.') + '</p>\n          <div class="card__meta">\n            <div class="chip">Price: ' + formatCurrency(product.selling_price_bdt || 0) + '</div>\n            ' + comparePrice + '\n          </div>\n          <div class="card-actions">\n            <button class="button-view" onclick="openDetail(\'' + product.id + '\')">View</button>\n            <button class="button-approve" onclick="handleAction(\'' + product.id + '\', \'approve\')">Approve</button>\n            <button class="button-reject" onclick="handleAction(\'' + product.id + '\', \'reject\')">Reject</button>\n          </div>\n          <div class="card-actions" style="margin-top: 8px;">\n            <button class="button-upload" onclick="handleAction(\'' + product.id + '\', \'upload\')" style="grid-column: span 3;">Upload</button>\n          </div>\n        </div>\n      ';
+      return card;
+    }
+
+    function renderProducts(products) {
+      latestProducts = products;
+      productGrid.innerHTML = '';
+      if (!products.length) {
+        emptyState.style.display = 'block';
+        return;
+      }
+      emptyState.style.display = 'none';
+      products.forEach((product) => productGrid.appendChild(renderProductCard(product)));
+    }
+
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/stats');
+        if (!res.ok) throw new Error('Failed to fetch stats');
+        return await res.json();
+      } catch (error) {
+        console.error(error);
+        return { pending: 0, approved: 0, rejected: 0, uploaded: 0, total: 0 };
+      }
+    }
+
+    async function loadProducts() {
+      renderStatusTabs();
+      const params = new URLSearchParams();
+      if (currentStatus !== 'all') params.set('status', currentStatus);
+      if (currentSearch) params.set('search', currentSearch);
+      try {
+        const [stats, productsRes] = await Promise.all([
+          fetchStats(),
+          fetch('/api/scraped?' + params.toString()),
+        ]);
+        const products = productsRes.ok ? await productsRes.json() : [];
+        renderStats(stats);
+        renderProducts(products);
+      } catch (error) {
+        console.error(error);
+        productGrid.innerHTML = '<div class="empty-state">Could not load products. Check the server and refresh.</div>';
+      }
+    }
+
+    function openModal(contentHtml) {
+      modalContent.innerHTML = contentHtml;
+      modalBackdrop.classList.add('open');
+    }
+
+    function closeModal() {
+      modalBackdrop.classList.remove('open');
+    }
+
+    function variantRows(variants) {
+      if (!Array.isArray(variants) || !variants.length) return '<p class="tooltip">No variants available.</p>';
+      return '<table class="detail-table"><thead><tr><th>Kind</th><th>Name</th><th>Value</th><th>Price USD</th><th>Image</th></tr></thead><tbody>' + variants
+        .map((variant) => '<tr><td>' + (variant.kind || '-') + '</td><td>' + (variant.name || '-') + '</td><td>' + (variant.value || '-') + '</td><td>' + (variant.price_usd ? formatCurrency(variant.price_usd) : '-') + '</td><td>' + (variant.image ? '<img src="' + variant.image + '" alt="' + (variant.value || '') + '" style="max-height:40px;max-width:80px;object-fit:contain;border:1px solid #ddd;padding:2px;" />' : '-') + '</td></tr>')
+        .join('') + '</tbody></table>';
+    }
+
+    function specRows(specifications) {
+      if (!Array.isArray(specifications) || !specifications.length) return '<p class="tooltip">No specifications available.</p>';
+      return '<table class="detail-table"><tbody>' + specifications
+        .map((spec) => '<tr><th>' + (spec.label || '-') + '</th><td>' + (spec.value || '-') + '</td></tr>')
+        .join('') + '</tbody></table>';
+    }
+
+    function formatDetailValue(value) {
+      if (value === null || value === undefined) return '<span class="tooltip">N/A</span>';
+      if (typeof value === 'string' && value.trim() !== '') return value.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+      if (Array.isArray(value) || typeof value === 'object') {
+        return '<pre class="raw-json">' + JSON.stringify(value, null, 2).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>';
+      }
+      return String(value);
+    }
+
+    function allFieldRows(product) {
+      return '<table class="detail-table"><tbody>' + Object.keys(product)
+        .sort()
+        .map((key) => '<tr><th>' + key + '</th><td>' + formatDetailValue(product[key]) + '</td></tr>')
+        .join('') + '</tbody></table>';
+    }
+
+    window.openDetail = function (id) {
+      const product = latestProducts.find((item) => String(item.id) === String(id));
+      if (!product) return;
+      const images = Array.isArray(product.downloaded_images) && product.downloaded_images.length ? product.downloaded_images : Array.isArray(product.images) ? product.images : [];
+      const imageGallery = images.length
+        ? images.map((src) => '<img src="' + src + '" alt="Product image" onerror="this.src=\'https://via.placeholder.com/300x180/0d172d/5f7fbc?text=No+Image\'" />').join('')
+        : '<p class="tooltip">No images available.</p>';
+      const detailHtml = '\n        <div class="modal-grid">\n          <div class="sidebar">\n            <div class="modal-section">\n              <h3>Product overview</h3>\n              <p><strong>Title:</strong> ' + product.title + '</p>\n              <p><strong>Status:</strong> ' + String(product.review_status || 'pending') + '</p>\n              <p><strong>Source:</strong> <a href="' + product.source_url + '" target="_blank" rel="noopener noreferrer" style="color: #a5d8ff;">Open original</a></p>\n              <p><strong>Price:</strong> ' + formatCurrency(product.selling_price_bdt || 0) + '</p>\n              <p><strong>Compare price:</strong> ' + (product.compare_at_price_bdt ? formatCurrency(product.compare_at_price_bdt) : 'N/A') + '</p>\n              <p><strong>Stock:</strong> ' + (product.stock ?? 'n/a') + '</p>\n            </div>\n            <div class="modal-section">\n              <h3>Description</h3>\n              <p>' + (product.description || 'No description available.') + '</p>\n            </div>\n          </div>\n          <div>\n            <div class="modal-section">\n              <h3>Images</h3>\n              <div class="modal-gallery">' + imageGallery + '</div>\n            </div>\n            <div class="modal-section">\n              <h3>Variants</h3>\n              ' + variantRows(product.variants || []) + '\n            </div>\n            <div class="modal-section">\n              <h3>Specifications</h3>\n              ' + specRows(product.specifications || []) + '\n            </div>\n          </div>\n        </div>\n        <div class="modal-section">\n          <h3>Full scraped_products record</h3>\n          ' + allFieldRows(product) + '\n        </div>\n      ';
+      openModal(detailHtml);
+    };
+
+    window.handleAction = async function (id, action) {
+      const confirmMap = {
+        reject: 'Rejecting will mark this product as rejected. Continue?',
+        upload: 'Upload this product to the live catalog? This is irreversible.',
+      };
+      if (confirmMap[action] && !confirm(confirmMap[action])) return;
+      try {
+        const res = await fetch('/api/scraped/' + id + '/' + action, { method: 'POST' });
+        const body = await res.json();
+        if (!res.ok || body.ok !== true) {
+          throw new Error(body.error || 'Action failed');
+        }
+        await loadProducts();
+      } catch (error) {
+        alert('Action failed: ' + error.message);
+      }
+    };
+
+    searchButton.addEventListener('click', () => {
+      currentSearch = searchInput.value.trim();
+      loadProducts();
+    });
+
+    searchInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        currentSearch = searchInput.value.trim();
+        loadProducts();
+      }
+    });
+
+    refreshButton.addEventListener('click', loadProducts);
+    modalClose.addEventListener('click', closeModal);
+    modalBackdrop.addEventListener('click', (event) => {
+      if (event.target === modalBackdrop) closeModal();
+    });
+
+    renderStatusTabs();
+    loadProducts();
+  </script>
+</body>
+</html>
